@@ -4,6 +4,7 @@ import { Luv2ShopFormService } from 'src/app/services/luv2-shop-form.service';
 import { Country } from 'src/app/common/country';
 import { State } from 'src/app/common/state';
 import { Luv2ShopValidators } from 'src/app/validators/luv2-shop-validators';
+import { CartService } from 'src/app/services/cart.service';
 
 @Component({
   selector: 'app-checkout',
@@ -16,7 +17,7 @@ export class CheckoutComponent implements OnInit {
 
   totalPrice: number = 0;
   totalQuantity: number = 0;
-
+  
   creditCardYears: number[] = [];
   creditCardMonths: number[] = [];
 
@@ -24,12 +25,15 @@ export class CheckoutComponent implements OnInit {
 
   shippingAddressStates: State[] = [];
   billingAddressStates: State[] = [];
-
   
-  constructor(private formBuilder: FormBuilder, 
-              private luv2ShopFormService: Luv2ShopFormService) { }
+  
+  constructor(private formBuilder: FormBuilder,
+              private luv2ShopFormService: Luv2ShopFormService,
+              private cartService: CartService) { }
 
   ngOnInit(): void {
+    
+    this.reviewCartDetails();
 
     this.checkoutFormGroup = this.formBuilder.group({
       customer: this.formBuilder.group({
@@ -50,7 +54,7 @@ export class CheckoutComponent implements OnInit {
         street: new FormControl('', [Validators.required, Validators.minLength(2), 
                                      Luv2ShopValidators.notOnlyWhitespace]),
         city: new FormControl('', [Validators.required, Validators.minLength(2), 
-                                  Luv2ShopValidators.notOnlyWhitespace]),
+                                   Luv2ShopValidators.notOnlyWhitespace]),
         state: new FormControl('', [Validators.required]),
         country: new FormControl('', [Validators.required]),
         zipCode: new FormControl('', [Validators.required, Validators.minLength(2), 
@@ -79,7 +83,7 @@ export class CheckoutComponent implements OnInit {
 
     // populate credit card months
 
-    const startMonth: number = new Date().getMonth() + 1; 
+    const startMonth: number = new Date().getMonth() + 1;
     console.log("startMonth: " + startMonth);
 
     this.luv2ShopFormService.getCreditCardMonths(startMonth).subscribe(
@@ -98,7 +102,7 @@ export class CheckoutComponent implements OnInit {
       }
     );
 
-    // populate countries 
+    // populate countries
 
     this.luv2ShopFormService.getCountries().subscribe(
       data => {
@@ -106,6 +110,20 @@ export class CheckoutComponent implements OnInit {
         this.countries = data;
       }
     );
+  }
+
+  reviewCartDetails() {
+
+    // subscribe to cartService.totalQuantity
+    this.cartService.totalQuantity.subscribe(
+      totalQuantity => this.totalQuantity = totalQuantity
+    );
+
+    // subscribe to cartService.totalPrice
+    this.cartService.totalPrice.subscribe(
+      totalPrice => this.totalPrice = totalPrice
+    );
+
   }
 
   get firstName() { return this.checkoutFormGroup.get('customer.firstName'); }
